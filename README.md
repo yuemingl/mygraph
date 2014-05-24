@@ -1,4 +1,4 @@
 Misc
 ====
 
-Some Interest Code
+This project contains the basic datastructure algorithms.
