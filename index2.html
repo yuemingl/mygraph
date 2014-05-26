@@ -7,7 +7,8 @@
 -->
 <html>
 <head>
-	<title>Hover icons example for mxGraph</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312"/>
+	<title>Graph Algorithms</title>
 
 	<!-- Sets the basepath for the library if not in same directory -->
 	<script type="text/javascript">
@@ -137,6 +138,18 @@
 				// Defines the tolerance before removing the icons
 				var iconTolerance = 20;
 
+				graph.addListener(mxEvent.CLICK, function (sender, evt) {
+				    var e = evt.getProperty('event'); // mouse event
+				    var cell = evt.getProperty('cell'); // cell may be null
+
+				    if (cell != null) {
+				        // Do something useful with cell and consume the event
+				        //evt.consume();
+                        if(cell.vertex)
+				            rootVertex = cell;
+				    }
+				});
+
 				// Shows icons if the mouse is over a cell
 				graph.addMouseListener(
 				{
@@ -217,29 +230,43 @@
 				// Adds cells to the model in a single step
 				graph.getModel().beginUpdate();
 
-				document.body.appendChild(mxUtils.button("DFS", function (evt) {
-				    resetFlags(rootVertex);
-				    DFS(rootVertex);
-					if(hasCircle) mxUtils.alert("The graph has a circle!");
+				document.getElementById('buttonGroup1').appendChild(mxUtils.button("All Selected Cells", function (evt) {
+				    mxLog.show();
+				    //graph.selectAll();
+				    cells = graph.getSelectionCells();
+				    for (var i = 0; i < cells.length; ++i) {
+				        mxLog.debug(graph.getLabel(cells[i]));
+				    }
 				}));
-				document.body.appendChild(mxUtils.button("BFS", function (evt) {
-				    resetFlags(rootVertex);
-				    BFS(rootVertex);
-				}));
-				document.body.appendChild(mxUtils.button("Traverse", function (evt) {
+				document.getElementById('buttonGroup1').appendChild(mxUtils.button("Vertices Traverse", function (evt) {
 				    mxLog.show();
 				    var cell = graph.getSelectionCell();
 				    graph.traverse(cell, true, function (vertex, edge) {
 				        mxLog.debug(graph.getLabel(vertex));
 				    });
 				}));
-				document.body.appendChild(mxUtils.button("GetAllEdges", function (evt) {
+				document.getElementById('buttonGroup1').appendChild(mxUtils.button("GetAllEdges", function (evt) {
 				    mxLog.show();
 				    var edges = getAllEdges(rootVertex);
 				    for(var i=0; i<edges.length; ++i) {
 				        mxLog.debug(graph.getLabel(edges[i]));
 				    }
 				}));
+
+
+				document.getElementById('buttonGroup2').appendChild(mxUtils.button("DFS", function (evt) {
+				    resetFlags(rootVertex);
+				    DFS(rootVertex);
+				    if (hasCircle) mxUtils.alert("DFS Done! The graph has a circle!");
+				}));
+				document.getElementById('buttonGroup2').appendChild(mxUtils.button("BFS", function (evt) {
+				    resetFlags(rootVertex);
+				    BFS(rootVertex);
+				}));
+				document.getElementById('buttonGroup2').appendChild(mxUtils.button("Bellman Ford", function (evt) {
+				    BellmanFord(rootVertex);
+				}));
+
 				try
 				{
 				    var vt = graph.insertVertex(parent, null, 't', 200,  20, 80, 80);
@@ -267,17 +294,11 @@
 					// Updates the display
 					graph.getModel().endUpdate();
 				}
-
+	            graph.selectVertices(rootVertex);
 
 			}
-            /*
-			mxLog.show();
-			//var cell = graph.getSelectionCell();
-			graph.traverse(v1, false, function (vertex, edge) {
-			    mxLog.debug(graph.getLabel(vertex));
-			});
-            */
 		};
+
 
 		var hasCircle = false;
 		function resetFlags(root) {
@@ -357,6 +378,13 @@
 		        }
 		    }
 		}
+		function getAllVertices(rt) {
+		    var rlt = Array();
+		    graph.traverse(rt, false, function (vertex, edge) {
+		        rlt.push(vertex);
+		    });
+		    return rlt;
+		}
 
         //-----------Bellman Ford Algorithm-------------
 		mxCell.prototype.pai = null;
@@ -370,21 +398,39 @@
         }
         function BellmanFord(s) {
             initSingleSource(s);
-
+            var allVertices = getAllVertices(s);
+            var allEdges = getAllEdges(s);
+            for (var i = 0; i < allVertices.length - 1; ++i) {
+                for(var j=0; j< allEdges.length; ++j) {
+                    relax(allEdges[j].source, allEdges[j].target, parseInt(allEdges[j].value));
+                }
+            }
+            for(var i=0; i<allVertices.length; ++i) {
+                graph.labelChanged(allVertices[i], allVertices[i].value + "/" + allVertices[i].sum);
+            }
         }
-
-
-
+        function relax(u, v, w) {
+            if(u.sum + w < v.sum) {
+                v.sum = u.sum + w;
+                v.pai = u;
+            }
+        }
 
 	</script>
 </head>
 
 <!-- Page passes the container for the graph to the program -->
 <body onload="main(document.getElementById('graphContainer'))">
-
+    This page shows how the graph algorithms works. You can click the icons to connect, duplicate and delete nodes when your pointer hover on the nodes. Create your own graph and have fun.
+    (Hint: Double click a node or an edge to add value for it.)(This example is taken from CLRS Chapter 24.1)
 	<!-- Creates a container for the graph with a grid wallpaper -->
 	<div id="graphContainer"
 		style="overflow:hidden;width:800px;height:400px;background:url('images/grid.gif');cursor:default;">
 	</div>
+    <div id="buttonGroup1">Basic Operations: </div>
+    <br/>
+    <div id="buttonGroup2">Algorithms: </div>
+    <br/>
+    zalgorithm算法面试QQ群：229623621
 </body>
 </html>
